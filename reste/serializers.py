@@ -4,12 +4,14 @@ from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer, Serializer, EmailField
 from .models import Product, User, ShoppingCard, Order
 from rest_framework import serializers, pagination
+from django.utils import timezone
+from reste.tasks import send_email
 
 from amqp import NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer, Serializer, EmailField
-from .models import Product, User, ShoppingCard, Merchant, Users, Client
+from .models import Product, User, ShoppingCard, Merchant, Users, Client, Credit, Chooses, Buys
 from rest_framework import serializers, pagination
 
 
@@ -39,6 +41,34 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+
+
+class CreditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Credit
+        fields = '__all__'
+
+
+class ChoosesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Chooses
+        fields = '__all__'
+
+
+class BuysSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Buys
+        fields = '__all__'
+
+    def create(self, validated_data):
+        validated_data['date'] = timezone.now()
+        buys = super().create(validated_data)
+
+        send_email.delay('roncrist5575@gmail.com',
+                         f'Please do payment you should do payment {buys.date}. Check our website.')
+
+        return buys
+
 
 
 class ClientSerializer(serializers.ModelSerializer):

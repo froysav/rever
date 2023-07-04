@@ -3,10 +3,12 @@ from sqlite3 import IntegrityError
 from django.core.mail import send_mail
 from django.db.models import Q, Sum
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError
 
-from .models import Product, User, ShoppingCard, Order, Merchant, Users, Client
+from .models import Product, User, ShoppingCard, Order, Merchant, Users, Client, Credit, Chooses, Buys
 from .serializers import ProductSerializer, ShoppingCardForDetailSerializer, ShoppingCardSerializer, \
-    LargeResultsSetPagination, EmailSerializer, OrderSerializer, MerchantSerializer, UsersSerializer, ClientSerializer
+    LargeResultsSetPagination, EmailSerializer, OrderSerializer, MerchantSerializer, UsersSerializer, ClientSerializer, \
+    CreditSerializer, ChoosesSerializer, BuysSerializer
 from .tasks import send_email
 from rest_framework import status, generics, filters
 from rest_framework.response import Response
@@ -29,12 +31,150 @@ class ProductAPIView(APIView):
         return Response(status=201)
 
 
+class CreditAPIView(APIView):
+
+    def get(self, request):
+        products = Credit.objects.all()
+        products_data = CreditSerializer(products, many=True)
+        return Response(products_data.data)
+
+    def post(self, request):
+        product_data = CreditSerializer(data=request.data)
+        product_data.is_valid(raise_exception=True)
+        product_data.save()
+        return Response(status=201)
+
+    def put(self, request):
+        try:
+            product = Credit.objects.first()
+        except Credit.DoesNotExist:
+            return Response(status=404)
+
+        product_data = CreditSerializer(product, data=request.data)
+        product_data.is_valid(raise_exception=True)
+        product_data.save()
+
+        return Response(status=200)
+
+    def delete(self, request):
+        try:
+            product = Credit.objects.first()
+        except Credit.DoesNotExist:
+            return Response(status=404)
+
+        product.delete()
+        return Response(status=204)
+
+
+class ChoosesAPIView(APIView):
+
+    def get(self, request):
+        chooses = Chooses.objects.all()
+        total_sum = 0
+        chooses_data = ChoosesSerializer(chooses, many=True).data
+
+        for choose in chooses:
+            total_sum += choose.quantity * choose.product.price
+
+        response_data = {
+            'total_sum': total_sum,
+            'chooses': chooses_data
+        }
+        return Response(response_data)
+
+    def post(self, request):
+        product_data = ChoosesSerializer(data=request.data)
+        product_data.is_valid(raise_exception=True)
+        product_data.save()
+        return Response(status=201)
+
+    def put(self, request):
+        try:
+            product = Chooses.objects.first()
+        except Chooses.DoesNotExist:
+            return Response(status=404)
+
+        product_data = ChoosesSerializer(product, data=request.data)
+        product_data.is_valid(raise_exception=True)
+        product_data.save()
+
+        return Response(status=200)
+
+    def delete(self, request):
+        try:
+            product = Chooses.objects.first()
+        except Chooses.DoesNotExist:
+            return Response(status=404)
+
+        product.delete()
+        return Response(status=204)
+
+
+class BuysAPIView(APIView):
+
+    def get(self, request):
+        products = Buys.objects.all()
+        sum_payments = Buys.calculate_sum()
+        products_data = BuysSerializer(products, many=True).data
+        response_data = {
+            'sum_payments': sum_payments,
+            'products': products_data
+        }
+        return Response(response_data)
+
+    def post(self, request):
+        serializer = BuysSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=201)
+
+    # def post(self, request):
+    #     serializer = BuysSerializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #
+    #     total_sum = sum([choose.quantity * choose.product.price for choose in Chooses.objects.all()])
+    #     payment = serializer.validated_data.get('payment')
+    #
+    #     if total_sum > payment or payment > total_sum:
+    #         send_email.delay('roncrist5575@gmail.com', f'Payment completed. No further payment required.')
+    #     if payment < total_sum:
+    #
+    #         send_email.delay('roncrist5575@gmail.com',
+    #                          f'Please make a payment. You need to pay an additional amount of {payment - total_sum}. Check our website.')
+    #
+    #     return Response(status=201)
+
+
+    def put(self, request):
+        try:
+            product = Buys.objects.first()
+        except Buys.DoesNotExist:
+            return Response(status=404)
+
+        product_data = BuysSerializer(product, data=request.data)
+        product_data.is_valid(raise_exception=True)
+        product_data.save()
+
+        return Response(status=200)
+
+    def delete(self, request):
+        try:
+            product = Buys.objects.first()
+        except Buys.DoesNotExist:
+            return Response(status=404)
+
+        product.delete()
+        return Response(status=204)
+
+
 class MerchantAPIView(APIView):
 
     def get(self, request):
         products = Merchant.objects.all()
         products_data = MerchantSerializer(products, many=True)
         return Response(products_data.data)
+
 
     def post(self, request):
         product_data = MerchantSerializer(data=request.data)

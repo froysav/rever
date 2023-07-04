@@ -4,7 +4,7 @@ from accounts.views import UserRegistrationAPIView, UserLoginAPIView
 from .views import ProductAPIView, ProductUpdateDeleteAPIView, AddToShoppingCardAPIView, \
     UserShoppingCardAPIView, DeleteFromCardAPIView, \
     BillingRecordsView, SendMail, SearchAPIView, \
-    ProductDetailAPIView, CardlistAPIView,OrderAPIView,MerchantAPIView,PutsAPIView,UsersAPIView,ClientAPIView,Client_detailsAPIView
+    ProductDetailAPIView, CardlistAPIView,OrderAPIView,MerchantAPIView,PutsAPIView,UsersAPIView,ClientAPIView,Client_detailsAPIView,CreditAPIView,ChoosesAPIView,BuysAPIView
 from rest_framework_swagger.views import get_swagger_view
 
 schema_view = get_swagger_view(title='API Documentation')
@@ -29,4 +29,7 @@ urlpatterns = [
     path('users/', UsersAPIView.as_view(), name='users'),
     path('client/', ClientAPIView.as_view(), name='client'),
     path('client/<int:pk>', Client_detailsAPIView.as_view(), name='clients'),
+    path('credit/', CreditAPIView.as_view(), name='credit'),
+    path('chooses/', ChoosesAPIView.as_view(), name='chooses'),
+    path('buys/', BuysAPIView.as_view(), name='buys'),
 ]
