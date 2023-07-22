@@ -154,7 +154,7 @@ class LargeResultsSetPagination(PageNumberPagination):
     def paginate_queryset(self, queryset, request, view=None):
         pk = view.kwargs.get('pk')
         if not queryset.filter(pk=pk).exists():
-            raise NotFound("Object not found with this pk")
+            raise NotFound("Object not found with this pk ")
 
         return super().paginate_queryset(queryset, request, view)
 
