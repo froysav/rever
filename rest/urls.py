@@ -30,7 +30,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from rest import settings
-from accounts.views import ResetPasswordAPIView, PasswordResetConfirmAPIView, UserRegistrationAPIView,UserLoginAPIView
+from user.views import ResetPasswordAPIView, PasswordResetConfirmAPIView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -48,12 +48,13 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include("reste.urls")),
-    # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    # path('accounts/', include("accounts.urls")),
-    # path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    # path('api/password/reset/', ResetPasswordAPIView.as_view(), name='password-reset'),
-    # path('api/password/reset/<str:token>/<str:uuid>/', PasswordResetConfirmAPIView.as_view(),
-    #      name='password-reset-confirm'),
+    path('', include("user.urls")),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('accounts/', include("user.urls")),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/password/reset/', ResetPasswordAPIView.as_view(), name='password-reset'),
+    path('api/password/reset/<str:token>/<str:uuid>/', PasswordResetConfirmAPIView.as_view(),
+         name='password-reset-confirm'),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),

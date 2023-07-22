@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'reste',
     'rest_framework_swagger',
     'rest_framework_simplejwt.token_blacklist',
+    'user',
 ]
 
 MIDDLEWARE = [

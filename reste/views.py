@@ -1,16 +1,24 @@
 from contextvars import Token
+from datetime import date
 from sqlite3 import IntegrityError
+
+from coreapi.compat import force_text
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.db.models import Q, Sum
+from django.utils.http import urlsafe_base64_decode
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Product, User, ShoppingCard, Order, Merchant, Users, Client, Credit, Chooses, Buys
 from .serializers import ProductSerializer, ShoppingCardForDetailSerializer, ShoppingCardSerializer, \
-    LargeResultsSetPagination, EmailSerializer, OrderSerializer, MerchantSerializer, UsersSerializer, ClientSerializer, \
-    CreditSerializer, ChoosesSerializer, BuysSerializer
+    LargeResultsSetPagination, OrderSerializer, MerchantSerializer, UsersSerializer, ClientSerializer, \
+    CreditSerializer, ChoosesSerializer, BuysSerializer, EmailSerializer
 from .tasks import send_email
-from rest_framework import status, generics, filters
+from rest_framework import status, generics, filters, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, login
@@ -122,11 +130,11 @@ class BuysAPIView(APIView):
         }
         return Response(response_data)
 
-    def post(self, request):
-        serializer = BuysSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(status=201)
+    # def post(self, request):
+    #     serializer = BuysSerializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(status=201)
 
     # def post(self, request):
     #     serializer = BuysSerializer(data=request.data)
@@ -144,7 +152,15 @@ class BuysAPIView(APIView):
     #                          f'Please make a payment. You need to pay an additional amount of {payment - total_sum}. Check our website.')
     #
     #     return Response(status=201)
+    def post(self, request):
+        serializer = BuysSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
+        buys = serializer.instance
+        buys.send_email_notification()
+
+        return Response(status=201)
 
     def put(self, request):
         try:
@@ -174,7 +190,6 @@ class MerchantAPIView(APIView):
         products = Merchant.objects.all()
         products_data = MerchantSerializer(products, many=True)
         return Response(products_data.data)
-
 
     def post(self, request):
         product_data = MerchantSerializer(data=request.data)

@@ -1,4 +1,10 @@
 from amqp import NotFound
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import send_mail
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer, Serializer, EmailField
@@ -60,15 +66,14 @@ class BuysSerializer(serializers.ModelSerializer):
         model = Buys
         fields = '__all__'
 
-    def create(self, validated_data):
-        validated_data['date'] = timezone.now()
-        buys = super().create(validated_data)
-
-        send_email.delay('roncrist5575@gmail.com',
-                         f'Please do payment you should do payment {buys.date}. Check our website.')
-
-        return buys
-
+    # def create(self, validated_data):
+    #     validated_data['date'] = timezone.now()
+    #     buys = super().create(validated_data)
+    #
+    #     send_email.delay('roncrist5575@gmail.com',
+    #                      f'Please do payment you should do payment {buys.date}. Check our website.')
+    #
+    #     return buys
 
 
 class ClientSerializer(serializers.ModelSerializer):

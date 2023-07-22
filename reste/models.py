@@ -1,7 +1,9 @@
 from django.db import models
-from django.db import models
 from flask import request
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser
+from django.core.exceptions import ValidationError
+from .tasks import send_email
+from datetime import date
 
 
 class Merchant(models.Model):
@@ -17,6 +19,45 @@ class Merchant(models.Model):
         return self.type_merchant
 
 
+class Product(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    image = models.ImageField()
+    name = models.CharField(max_length=100)
+    category = models.CharField(max_length=100)
+    firm = models.CharField(max_length=100)
+    model_product = models.CharField(max_length=100)
+    ikpu_product = models.CharField(max_length=100)
+    color_product = models.CharField(max_length=100)
+    country_manufacture = models.CharField(max_length=100)
+    price = models.IntegerField()
+
+    # phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE)
+    # laptop = models.ForeignKey(Komp, null=True, blank=True, on_delete=models.CASCADE)
+    # telev = models.ForeignKey(Telev, null=True, blank=True, on_delete=models.CASCADE)
+    # plan = models.ForeignKey(Plan, null=True, blank=True, on_delete=models.CASCADE)
+    #
+    # def clean(self):
+    #     filled_fields = 0
+    #
+    #     if self.phone is not None:
+    #         filled_fields += 1
+    #
+    #     if self.laptop is not None:
+    #         filled_fields += 1
+    #
+    #     if self.telev is not None:
+    #         filled_fields += 1
+    #
+    #     if self.plan is not None:
+    #         filled_fields += 1
+    #
+    #     if filled_fields > 1:
+    #         raise ValidationError("Only one field (phone, laptop, telev, plan) can be filled.")
+
+    def __str__(self):
+        return self.name
+
+
 class Phone(models.Model):
     name_model = models.TextField()
     image = models.ImageField()
@@ -26,6 +67,7 @@ class Phone(models.Model):
     email = models.EmailField()
     phone_number = models.CharField(max_length=100)
     characteristics = models.TextField()
+    phone = models.ForeignKey(Product, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name_model
@@ -39,9 +81,13 @@ class Telev(models.Model):
     dogovor = models.BooleanField()
     email = models.EmailField()
     characteristics = models.TextField()
+    telev = models.ForeignKey(Product, null=True, blank=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name_model
 
 
-class Laptop(models.Model):
+class Komp(models.Model):
     name_model = models.CharField(max_length=100)
     image = models.ImageField()
     description = models.TextField()
@@ -50,6 +96,7 @@ class Laptop(models.Model):
     email = models.EmailField()
     characteristics = models.TextField()
     memory = models.IntegerField()
+    komp = models.ForeignKey(Product, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name_model
@@ -64,35 +111,10 @@ class Plan(models.Model):
     email = models.EmailField()
     characteristics = models.TextField()
     memory = models.IntegerField()
+    plan = models.ForeignKey(Product, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name_model
-
-
-class Product(models.Model):
-    CATEGORY_CHOICES = (
-        ('laptop', 'Laptop'),
-        ('phone', 'Phone'),
-    )
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    image = models.ImageField()
-    name = models.CharField(max_length=100)
-    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
-    firm = models.CharField(max_length=100)
-    model_product = models.CharField(max_length=100)
-    ikpu_product = models.CharField(max_length=100)
-    color_product = models.CharField(max_length=100)
-    country_manufacture = models.CharField(max_length=100)
-    price = models.IntegerField()
-
-    phone = models.OneToOneField(Phone, null=True, blank=True, on_delete=models.CASCADE)
-    laptop = models.OneToOneField(Laptop, null=True, blank=True, on_delete=models.CASCADE)
-    telev = models.OneToOneField(Telev, null=True, blank=True, on_delete=models.CASCADE)
-    plan = models.OneToOneField(Plan, null=True, blank=True, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.name
 
 
 class ShoppingCard(models.Model):
@@ -190,6 +212,30 @@ class Chooses(models.Model):
         return self.product.name
 
 
+# class Buys(models.Model):
+#     Credit_Choices = (
+#         (3, 3),
+#         (4, 4),
+#         (6, 6),
+#     )
+#     category = models.CharField(max_length=100, choices=Credit_Choices)
+#     date = models.DateTimeField()
+#     payment = models.FloatField()
+#     chooses = models.ForeignKey(Chooses, on_delete=models.CASCADE)
+#     credit = models.ForeignKey(Credit, on_delete=models.CASCADE)
+#
+#     def __str__(self):
+#         return self.category
+#
+#     @classmethod
+#     def calculate_sum(cls):
+#         return sum(cls.objects.values_list('payment', flat=True))
+
+from datetime import date
+from django.db import models
+from .tasks import send_email
+
+
 class Buys(models.Model):
     Credit_Choices = (
         (3, 3),
@@ -205,6 +251,15 @@ class Buys(models.Model):
     def __str__(self):
         return self.category
 
-    @classmethod
-    def calculate_sum(cls):
-        return sum(cls.objects.values_list('payment', flat=True))
+    def send_email_notification(self):
+        if self.date.date() == date.today():
+            total_sum = sum([choose.quantity * choose.product.price for choose in Chooses.objects.all()])
+            if total_sum == self.payment:
+                message = f'Payment completed. No further payment required.'
+            elif self.payment < total_sum:
+                message = f'Please make a payment. You need to pay an additional amount of {total_sum - self.payment}. Check our website.'
+            else:
+                return
+
+            send_email.delay('roncrist5575@gmail.com', message)
+

@@ -1,14 +1,15 @@
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import send_mail
-from django.utils.encoding import force_bytes, force_str, smart_str
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import UserSerializer
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth.tokens import default_token_generator
+from user.serializers import UserSerializer
 
 
-def register_service(request_data):
+def register_service(request_data, request):
     password1 = request_data.get('password1')
     password2 = request_data.get('password2')
     email = request_data.get('email')
@@ -25,6 +26,19 @@ def register_service(request_data):
         user = User.objects.get(username=username)
         user.set_password(password1)
         user.save()
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        current_site = get_current_site(request)
+        print(current_site)
+        print(current_site.domain)
+        send_mail(
+            'Activate your account',
+            f'To activate your account click the link { current_site.domain }/verify/{ uid }/{ token }',
+            'muslimazokirjonova2004@gmail.com',
+            [user.email],
+            fail_silently=True
+        )
+
     else:
         return {'success': False, 'error': 'Passwords are not same!'}
     return {'success': True, 'error': ''}
@@ -39,7 +53,7 @@ def reset_password_service(request):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
 
         current_site = get_current_site(request)
-        subject = 'Reset Password'
+        subject = 'Rest Password'
         msg = f'''
             User: {email}
             url: {current_site.domain}/{token}/{uid}
@@ -51,8 +65,7 @@ def reset_password_service(request):
 
 
 def reset_password_confirm_service(request, token, uid):
-    id_ = force_str(urlsafe_base64_decode(uid))
-    print(id_)
+    id_ = force_str(urlsafe_base64_encode(uid))
     user = User.objects.get(pk=id_)
 
     if not default_token_generator.check_token(user, token):
