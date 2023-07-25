@@ -1,5 +1,3 @@
-from django.db import models
-
 from django.db.models import Model, ImageField, ForeignKey, CASCADE, CharField, TextField, URLField, SlugField, \
     ManyToManyField
 from django.utils.text import slugify

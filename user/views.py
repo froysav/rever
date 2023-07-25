@@ -1,5 +1,3 @@
-from django.shortcuts import render
-
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
@@ -13,7 +11,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import (RefreshToken)
 
 from user.models import Project
-from user.serializers import AllProjectsModelSerializer, ProjectDetailModelSerializer, SendEmailSerializer, \
+from user.serializers import ProjectDetailModelSerializer, SendEmailSerializer, \
     UserSerializer, RegisterSerializer
 from user.services import (register_service, reset_password_service, reset_password_confirm_service)
 from user.tasks import send_email_customer
@@ -77,9 +75,9 @@ class VerifyAccountAPIView(APIView):
         })
 
 
-class AllProjectModelViewSet(ModelViewSet):
-    queryset = Project.objects.all()
-    serializer_class = AllProjectsModelSerializer
+# class AllProjectModelViewSet(ModelViewSet):
+#     queryset = Project.objects.all()
+#     serializer_class = AllProjectsModelSerializer
 
 
 class ProjectDetailRetrieveAPIView(RetrieveAPIView):
@@ -87,11 +85,11 @@ class ProjectDetailRetrieveAPIView(RetrieveAPIView):
     serializer_class = ProjectDetailModelSerializer
 
 
-class ProjectSearchListAPIView(ListAPIView):
-    queryset = Project.objects.all()
-    serializer_class = ProjectDetailModelSerializer
-    filter_backends = [SearchFilter]
-    search_fields = ['title_en', 'title_uz', 'title_ru', 'keyword_uz', 'keyword_en', 'keyword_ru']
+# class ProjectSearchListAPIView(ListAPIView):
+#     queryset = Project.objects.all()
+#     serializer_class = ProjectDetailModelSerializer
+#     filter_backends = [SearchFilter]
+#     search_fields = ['title_en', 'title_uz', 'title_ru', 'keyword_uz', 'keyword_en', 'keyword_ru']
 
 
 class SendMailAPIView(GenericAPIView):

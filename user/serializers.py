@@ -19,11 +19,11 @@ class RegisterSerializer(ModelSerializer):
         fields = ('first_name', 'last_name', 'email', 'username', 'password1', 'password2')
 
 
-class AllProjectsModelSerializer(ModelSerializer):
-    class Meta:
-        model = Project
-        fields = (
-            'id', 'title_en', 'title_ru', 'title_uz', 'description_en', 'description_ru', 'description_uz', 'image')
+# class AllProjectsModelSerializer(ModelSerializer):
+#     class Meta:
+#         model = Project
+#         fields = (
+#         'id', 'title_en', 'title_ru', 'title_uz', 'description_en', 'description_ru', 'description_uz', 'image')
 
 
 class ProjectDetailModelSerializer(ModelSerializer):
