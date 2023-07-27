@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from user.views import (RegisterAPIView, LogoutAPIView, VerifyAccountAPIView, ProjectDetailRetrieveAPIView,
-                              SendMailAPIView)
+                              SendMailAPIView,PasswordResetConfirmAPIView)
 
 routers = DefaultRouter()
 # routers.register('project', AllProjectModelViewSet)
@@ -10,6 +10,7 @@ routers = DefaultRouter()
 urlpatterns = [
     path('', include(routers.urls)),
     path('register', RegisterAPIView.as_view(), name='register'),
+    path('reset', PasswordResetConfirmAPIView.as_view(), name='reset'),
     path('logout', LogoutAPIView.as_view(), name='logout'),
     path('verify/<str:uid>/<str:token>', VerifyAccountAPIView.as_view(), name='verify'),
     path('project_detail/<int:pk>', ProjectDetailRetrieveAPIView.as_view()),
