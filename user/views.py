@@ -1,52 +1,89 @@
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.filters import SearchFilter
-from rest_framework.generics import RetrieveAPIView, ListAPIView, GenericAPIView
+from rest_framework.generics import RetrieveAPIView, ListAPIView, GenericAPIView, UpdateAPIView
 from rest_framework.permissions import (IsAuthenticated)
 from rest_framework.response import (Response)
 from rest_framework.views import (APIView)
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import (RefreshToken)
+from rest_framework import serializers, status
 
 from user.models import Project
 from user.serializers import ProjectDetailModelSerializer, SendEmailSerializer, \
-    UserSerializer, RegisterSerializer
-from user.services import (register_service, reset_password_service, reset_password_confirm_service)
+    UserSerializer, RegisterSerializer, ResetPasswordSerializer, ForgotPasswordSerializer
+from user.services import (register_service, reset_password_service, reset_password_confirm_service,
+                           send_password_reset_email)
 from user.tasks import send_email_customer
+from rest_framework.exceptions import ParseError
 
 
 # Register API
 class RegisterAPIView(GenericAPIView):
     serializer_class = RegisterSerializer
     permission_classes = ()
+
     def post(self, request):
         response = register_service(request.data, request)
         if response['success']:
             return Response(status=201)
-        return Response(response, status=405)
+        return Response(response, status=400)
 
 
-#  Reset Password API
-class ResetPasswordAPIView(APIView):
-    def post(self, request):
-        responce = reset_password_service(request)
-        if responce['success']:
-            return Response({'message': 'sent'})
-        return Response(responce, status=404)
+class ResetPasswordAPIView(GenericAPIView):
+    serializer_class = ResetPasswordSerializer
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-# Reset Password Confirm API
+        user = self.request.user
+        new_password = serializer.validated_data['new_password']
+
+        response = reset_password_service(user, new_password)
+        if response['success']:
+            return Response({'message': 'Password reset successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Password reset failed.'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class PasswordResetConfirmAPIView(APIView):
-
     def post(self, request, token, uuid):
         response = reset_password_confirm_service(request, token, uuid)
         if response['success']:
             return Response({'message': 'Password changed'})
         return Response(response, status=400)
 
+
+class ForgotPasswordAPIView(GenericAPIView):
+    serializer_class = ForgotPasswordSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+
+        users = User.objects.filter(email=email)
+
+        if not users.exists():
+            return Response({'message': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if users.count() > 1:
+            user = users.order_by('-date_joined').first()
+        else:
+            user = users.first()
+
+        reset_link = f"http://127.0.0.1:8000/accounts/reset/{user.pk}"
+
+        send_password_reset_email(user, reset_link)
+
+        return Response({'message': 'Password reset link sent successfully.'}, status=status.HTTP_200_OK)
 
 # Logout API
 class LogoutAPIView(APIView):
@@ -95,6 +132,7 @@ class ProjectDetailRetrieveAPIView(RetrieveAPIView):
 class SendMailAPIView(GenericAPIView):
     serializer_class = SendEmailSerializer
     permission_classes = ()
+
     # @swagger_auto_schema(query_serializer=SendEmailSerializer, request_body=4)
     def post(self, request):
         try:

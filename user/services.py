@@ -2,9 +2,11 @@ from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.conf import settings
 
 from user.serializers import UserSerializer
 
@@ -33,7 +35,7 @@ def register_service(request_data, request):
         print(current_site.domain)
         send_mail(
             'Activate your account',
-            f'To activate your account click the link { current_site.domain }/verify/{ uid }/{ token }',
+            f'To activate your account click the link {current_site.domain}/verify/{uid}/{token}',
             'muslimazokirjonova2004@gmail.com',
             [user.email],
             fail_silently=True
@@ -44,24 +46,56 @@ def register_service(request_data, request):
     return {'success': True, 'error': ''}
 
 
-def reset_password_service(request):
+def reset_password_service(user, new_password):
     try:
-        email = request.data.get('email')
-        user = User.objects.get(email=email)
-
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-        current_site = get_current_site(request)
-        subject = 'Rest Password'
-        msg = f'''
-            User: {email}
-            url: {current_site.domain}/{token}/{uid}
-        '''
-        send_mail(subject, msg, 'no-reply@gmail.com', [email])
+        user.set_password(new_password)
+        user.save()
+        return {'success': True, 'message': 'Password reset successfully.'}
     except Exception as e:
-        return {'success': False, 'error': f'{e}'}
-    return {'success': True, 'error': ''}
+        return {'success': False, 'message': 'Password reset failed.', 'error': str(e)}
+
+
+def generate_reset_token(user):
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    return uid, token
+
+
+def send_password_reset_email(user, reset_link):
+    subject = 'Password Reset'
+    message = f'Click the link below to reset your password:\n\n{reset_link}'
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [user.email]
+
+    send_mail(subject, message, from_email, recipient_list)
+
+
+def send_reset_email(user, reset_link):
+    subject = 'Password Reset Request'
+    message = render_to_string('', {'accounts/reset/password': reset_link})
+    from_email = 'roncrist5575@gmail.com'
+    to_email = user.email
+    send_mail(subject, message, from_email, [to_email])
+
+
+# def reset_password_service(request):
+#     try:
+#         email = request.data.get('email')
+#         user = User.objects.get(email=email)
+#
+#         token = default_token_generator.make_token(user)
+#         uid = urlsafe_base64_encode(force_bytes(user.pk))
+#
+#         current_site = get_current_site(request)
+#         subject = 'Rest Password'
+#         msg = f'''
+#             User: {email}
+#             url: {current_site.domain}/{token}/{uid}
+#         '''
+#         send_mail(subject, msg, 'no-reply@gmail.com', [email])
+#     except Exception as e:
+#         return {'success': False, 'error': f'{e}'}
+#     return {'success': True, 'error': ''}
 
 
 def reset_password_confirm_service(request, token, uid):

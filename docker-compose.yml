@@ -17,6 +17,7 @@ services:
 #      - db
       - redis
       - celery
+
 #  db:
 #    image: postgres:14.0-alpine
 #    volumes:
@@ -27,6 +28,10 @@ services:
 #      - POSTGRES_PASSWORD=kpay_admin
 #      - POSTGRES_HOST=db
 #      - POSTGRES_PORT=5432
+  elasticsearch_service:
+    image: elasticsearch:7.14.0
+    ports:
+      - "9200:9200"
   redis:
     image: redis:6-alpine
     container_name: redis

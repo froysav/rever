@@ -31,9 +31,9 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include("reste.urls")),
+    path('', include("reste.urls")),
     path('', include("user.urls")),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('accounts/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('accounts/', include("user.urls")),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/password/reset/', ResetPasswordAPIView.as_view(), name='password-reset'),

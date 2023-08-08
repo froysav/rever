@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework.serializers import ModelSerializer, Serializer, CharField, EmailField
-
+from rest_framework import serializers
 from user.models import Project
 
 
@@ -8,6 +8,15 @@ class UserSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email', 'username')
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    new_password = serializers.CharField(write_only=True)
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 
 
 class RegisterSerializer(ModelSerializer):

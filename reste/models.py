@@ -21,7 +21,7 @@ class Merchant(models.Model):
 
 class Product(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    image = models.ImageField()
+    # image = models.ImageField()
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
     firm = models.CharField(max_length=100)
@@ -30,6 +30,7 @@ class Product(models.Model):
     color_product = models.CharField(max_length=100)
     country_manufacture = models.CharField(max_length=100)
     price = models.IntegerField()
+    sale = models.BooleanField(default=False)
 
     # phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE)
     # laptop = models.ForeignKey(Komp, null=True, blank=True, on_delete=models.CASCADE)

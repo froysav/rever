@@ -10,7 +10,7 @@ from django.db.models import Q, Sum
 from django.utils.http import urlsafe_base64_decode
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Product, User, ShoppingCard, Order, Merchant, Users, Client, Credit, Chooses, Buys
@@ -25,97 +25,36 @@ from django.contrib.auth import authenticate, login
 from .serializers import UserSerializer, LoginSerializer
 
 
-class ProductAPIView(APIView):
-
-    def get(self, request):
-        products = Product.objects.all()
-        products_data = ProductSerializer(products, many=True)
-        return Response(products_data.data)
-
-    def post(self, request):
-        product_data = ProductSerializer(data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-        return Response(status=201)
+class ProductAPIView(generics.ListCreateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
 
 
-class CreditAPIView(APIView):
+class CreditAPIView(generics.ListCreateAPIView):
+    queryset = Credit.objects.all()
+    serializer_class = CreditSerializer
 
-    def get(self, request):
-        products = Credit.objects.all()
-        products_data = CreditSerializer(products, many=True)
-        return Response(products_data.data)
 
-    def post(self, request):
-        product_data = CreditSerializer(data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-        return Response(status=201)
+class CreditidAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Credit.objects.all()
+    serializer_class = CreditSerializer
+    lookup_url_kwarg = 'credit_id'
 
-    def put(self, request):
+    def get_object(self):
         try:
-            product = Credit.objects.first()
+            return self.queryset.get(pk=self.kwargs.get(self.lookup_url_kwarg))
         except Credit.DoesNotExist:
-            return Response(status=404)
-
-        product_data = CreditSerializer(product, data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-
-        return Response(status=200)
-
-    def delete(self, request):
-        try:
-            product = Credit.objects.first()
-        except Credit.DoesNotExist:
-            return Response(status=404)
-
-        product.delete()
-        return Response(status=204)
+            raise NotFound()
 
 
-class ChoosesAPIView(APIView):
+class ChoosesAPIView(generics.ListCreateAPIView):
+    queryset = Chooses.objects.all()
+    serializer_class = ChoosesSerializer
 
-    def get(self, request):
-        chooses = Chooses.objects.all()
-        total_sum = 0
-        chooses_data = ChoosesSerializer(chooses, many=True).data
 
-        for choose in chooses:
-            total_sum += choose.quantity * choose.product.price
-
-        response_data = {
-            'total_sum': total_sum,
-            'chooses': chooses_data
-        }
-        return Response(response_data)
-
-    def post(self, request):
-        product_data = ChoosesSerializer(data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-        return Response(status=201)
-
-    def put(self, request):
-        try:
-            product = Chooses.objects.first()
-        except Chooses.DoesNotExist:
-            return Response(status=404)
-
-        product_data = ChoosesSerializer(product, data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-
-        return Response(status=200)
-
-    def delete(self, request):
-        try:
-            product = Chooses.objects.first()
-        except Chooses.DoesNotExist:
-            return Response(status=404)
-
-        product.delete()
-        return Response(status=204)
+class ChooseidAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Chooses.objects.all()
+    serializer_class = ChoosesSerializer
 
 
 class BuysAPIView(APIView):
@@ -129,12 +68,6 @@ class BuysAPIView(APIView):
             'products': products_data
         }
         return Response(response_data)
-
-    # def post(self, request):
-    #     serializer = BuysSerializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(status=201)
 
     # def post(self, request):
     #     serializer = BuysSerializer(data=request.data)
@@ -162,54 +95,20 @@ class BuysAPIView(APIView):
 
         return Response(status=201)
 
-    def put(self, request):
-        try:
-            product = Buys.objects.first()
-        except Buys.DoesNotExist:
-            return Response(status=404)
 
-        product_data = BuysSerializer(product, data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-
-        return Response(status=200)
-
-    def delete(self, request):
-        try:
-            product = Buys.objects.first()
-        except Buys.DoesNotExist:
-            return Response(status=404)
-
-        product.delete()
-        return Response(status=204)
+class BuysidAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Buys.objects.all()
+    serializer_class = BuysSerializer
 
 
-class MerchantAPIView(APIView):
-
-    def get(self, request):
-        products = Merchant.objects.all()
-        products_data = MerchantSerializer(products, many=True)
-        return Response(products_data.data)
-
-    def post(self, request):
-        product_data = MerchantSerializer(data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-        return Response(status=201)
+class MerchantAPIView(generics.ListCreateAPIView):
+    queryset = Merchant.objects.all()
+    serializer_class = MerchantSerializer
 
 
-class ClientAPIView(APIView):
-
-    def get(self, request):
-        products = Client.objects.all()
-        products_data = ClientSerializer(products, many=True)
-        return Response(products_data.data)
-
-    def post(self, request):
-        product_data = ClientSerializer(data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-        return Response(status=201)
+class ClientAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
 
 
 class Client_detailsAPIView(APIView):
@@ -235,39 +134,14 @@ class Client_detailsAPIView(APIView):
         return Response(status=204)
 
 
-class UsersAPIView(APIView):
+class UsersAPIView(generics.ListCreateAPIView):
+    queryset = Users.objects.all()
+    serializer_class = UsersSerializer
 
-    def get(self, request):
-        products = Users.objects.all()
-        products_data = UsersSerializer(products, many=True)
-        return Response(products_data.data)
 
-    def post(self, request):
-        product_data = UsersSerializer(data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-        return Response(status=201)
-
-    def put(self, request):
-        try:
-            product = Users.objects.first()
-        except Users.DoesNotExist:
-            return Response(status=404)
-
-        product_data = UsersSerializer(product, data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-
-        return Response(status=200)
-
-    def delete(self, request):
-        try:
-            product = Users.objects.first()
-        except Users.DoesNotExist:
-            return Response(status=404)
-
-        product.delete()
-        return Response(status=204)
+class UsersidAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Users.objects.all()
+    serializer_class = UsersSerializer
 
 
 class PutsAPIView(APIView):
@@ -284,45 +158,6 @@ class PutsAPIView(APIView):
         return Response(status=200)
 
 
-class CardlistAPIView(APIView):
-
-    def get(self, request):
-        products = ShoppingCard.objects.all()
-        products_data = ShoppingCardSerializer(products, many=True)
-        return Response(products_data.data)
-
-
-class ProductUpdateDeleteAPIView(APIView):
-
-    def put(self, request, pk):
-        try:
-            product = Product.objects.get(pk=pk)
-        except Product.DoesNotExist:
-            return Response(status=404)
-        product_data = ProductSerializer(product, data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-        return Response(product_data.data)
-
-    def patch(self, request, pk):
-        try:
-            product = Product.objects.get(pk=pk)
-        except Product.DoesNotExist:
-            return Response(status=404)
-        product_data = ProductSerializer(product, data=request.data, partial=True)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-        return Response(product_data.data)
-
-    def delete(self, request, pk):
-        try:
-            product = Product.objects.get(pk=pk)
-        except Product.DoesNotExist:
-            return Response(status=404)
-        product.delete()
-        return Response(status=204)
-
-
 class ProductDetailAPIView(APIView):
     def get(self, request, pk):
         try:
@@ -334,17 +169,21 @@ class ProductDetailAPIView(APIView):
             return Response('This does not exist')
 
 
-class AddToShoppingCardAPIView(APIView):
+class ProductUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+
+class AddToShoppingCardAPIView(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
+    queryset = ShoppingCard.objects.all()
+    serializer_class = ShoppingCardSerializer
 
-    def post(self, request):
-        request.data._mutable = True
-        request.data['user'] = request.user.id
-        serializer = ShoppingCardSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
 
-        return Response(status=201)
+class AddToShoppingCardidAPIView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    queryset = ShoppingCard.objects.all()
+    serializer_class = ShoppingCardSerializer
 
 
 class UserShoppingCardAPIView(APIView):
@@ -417,13 +256,14 @@ class SearchAPIView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    search_fields = ['name', 'price']
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        q = self.request.GET.get('name', None)
+        q = self.request.GET.get('q', None)
         if q:
             queryset = queryset.filter(
-                Q(name__icontains=q)
+                Q(name__icontains=q) |
+                Q(price__icontains=q)
             )
         return queryset
