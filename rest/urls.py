@@ -1,6 +1,3 @@
-from django.contrib import admin
-from django.urls import path, re_path
-from django.urls import path, include
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -11,7 +8,8 @@ from drf_yasg import openapi
 from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from rest_framework import routers
 
 from rest import settings
 from user.views import ResetPasswordAPIView, PasswordResetConfirmAPIView
@@ -29,10 +27,12 @@ schema_view = get_schema_view(
     permission_classes=[permissions.AllowAny],
 )
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include("reste.urls")),
     path('', include("user.urls")),
+    path('api/v1/find/', include("elastic_search.urls")),
     path('accounts/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('accounts/', include("user.urls")),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

@@ -22,6 +22,7 @@ class Merchant(models.Model):
 class Product(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # image = models.ImageField()
+    description = models.TextField()
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
     firm = models.CharField(max_length=100)

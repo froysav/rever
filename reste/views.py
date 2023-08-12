@@ -1,28 +1,15 @@
-from contextvars import Token
-from datetime import date
-from sqlite3 import IntegrityError
-
-from coreapi.compat import force_text
-from django.contrib.auth.tokens import default_token_generator
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import send_mail
 from django.db.models import Q, Sum
-from django.utils.http import urlsafe_base64_decode
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics, filters
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import ValidationError, NotFound
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Product, User, ShoppingCard, Order, Merchant, Users, Client, Credit, Chooses, Buys
+from .models import Product, ShoppingCard, Order, Merchant, Users, Client, Credit, Chooses, Buys
 from .serializers import ProductSerializer, ShoppingCardForDetailSerializer, ShoppingCardSerializer, \
     LargeResultsSetPagination, OrderSerializer, MerchantSerializer, UsersSerializer, ClientSerializer, \
     CreditSerializer, ChoosesSerializer, BuysSerializer, EmailSerializer
 from .tasks import send_email
-from rest_framework import status, generics, filters, permissions
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from django.contrib.auth import authenticate, login
-from .serializers import UserSerializer, LoginSerializer
 
 
 class ProductAPIView(generics.ListCreateAPIView):

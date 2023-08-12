@@ -1,26 +1,20 @@
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.filters import SearchFilter
-from rest_framework.generics import RetrieveAPIView, ListAPIView, GenericAPIView, UpdateAPIView
+from rest_framework import status
+from rest_framework.generics import RetrieveAPIView, GenericAPIView
 from rest_framework.permissions import (IsAuthenticated)
 from rest_framework.response import (Response)
 from rest_framework.views import (APIView)
-from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import (RefreshToken)
-from rest_framework import serializers, status
 
 from user.models import Project
-from user.serializers import ProjectDetailModelSerializer, SendEmailSerializer, \
-    UserSerializer, RegisterSerializer, ResetPasswordSerializer, ForgotPasswordSerializer
+from user.serializers import ProjectDetailModelSerializer, \
+    RegisterSerializer, ResetPasswordSerializer, ForgotPasswordSerializer, SendEmailSerializer
 from user.services import (register_service, reset_password_service, reset_password_confirm_service,
                            send_password_reset_email)
 from user.tasks import send_email_customer
-from rest_framework.exceptions import ParseError
 
 
 # Register API
@@ -85,6 +79,7 @@ class ForgotPasswordAPIView(GenericAPIView):
 
         return Response({'message': 'Password reset link sent successfully.'}, status=status.HTTP_200_OK)
 
+
 # Logout API
 class LogoutAPIView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -128,12 +123,15 @@ class ProjectDetailRetrieveAPIView(RetrieveAPIView):
 #     filter_backends = [SearchFilter]
 #     search_fields = ['title_en', 'title_uz', 'title_ru', 'keyword_uz', 'keyword_en', 'keyword_ru']
 
-
 class SendMailAPIView(GenericAPIView):
     serializer_class = SendEmailSerializer
     permission_classes = ()
 
-    # @swagger_auto_schema(query_serializer=SendEmailSerializer, request_body=4)
+    @swagger_auto_schema(
+        request_body=SendEmailSerializer,
+        responses={200: 'Success', 400: 'Bad Request'}
+    )
+
     def post(self, request):
         try:
             serializer = self.serializer_class(data=request.data)

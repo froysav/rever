@@ -1,4 +1,3 @@
-from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
@@ -12,7 +11,7 @@ routers = DefaultRouter()
 # routers.register('project', AllProjectModelViewSet)
 
 urlpatterns = [
-    path('', include(routers.urls)),
+    # path('', include(routers.urls)),
     path('register', RegisterAPIView.as_view(), name='register'),
     # path('resetconfirm', PasswordResetConfirmAPIView.as_view(), name='reset'),
     # path('reset', ResetPasswordAPIView.as_view(), name='resete'),

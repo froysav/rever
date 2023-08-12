@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from rest_framework.serializers import ModelSerializer, Serializer, CharField, EmailField
+from rest_framework.serializers import ModelSerializer, CharField, EmailField
 from rest_framework import serializers
 from user.models import Project
 
@@ -41,7 +41,7 @@ class ProjectDetailModelSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class SendEmailSerializer(Serializer):
+class SendEmailSerializer(serializers.Serializer):
     message = CharField(max_length=500)
     name = CharField(max_length=100)
     phone = CharField(max_length=55)

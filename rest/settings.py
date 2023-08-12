@@ -28,13 +28,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'drf_yasg',
+    'rest_framework_swagger',
     'rest_framework',
     'django_elasticsearch_dsl',
     'django_elasticsearch_dsl_drf',
     'rest_framework_simplejwt',
     'django_celery_results',
+    'elastic_search',
     'reste',
-    'rest_framework_swagger',
     'rest_framework_simplejwt.token_blacklist',
     'user',
 ]
@@ -48,11 +49,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-ELASTICSEARCH_DSL={
-    'default': {
-        'hosts': 'localhost:9200'
-    },
-}
+
 ROOT_URLCONF = 'rest.urls'
 
 SWAGGER_SETTINGS = {
@@ -108,6 +105,16 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': 'localhost:9200'
+    },
+}
+
+# ELASTICSEARCH_INDEX_NAMES = {
+#     'reste.product': 'products',
+# }
+
 
 LANGUAGE_CODE = 'en-us'
 
