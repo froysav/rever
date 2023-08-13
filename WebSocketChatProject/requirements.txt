@@ -1,0 +1,6 @@
+fastapi[all]
+uvicorn
+databases[postgresql]
+sqlalchemy
+cryptography
+pyjwt

@@ -17,6 +17,14 @@ services:
       #      - db
       - redis
       - celery
+  fast:
+    build: ./WebSocketChatProject
+    container_name: fast
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./WebSocketChatProject:/app
+    ports:
+      - "8001:8000"
 
   #  db:
   #    image: postgres:14.0-alpine

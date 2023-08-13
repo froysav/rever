@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>WebSocket Chat</title>
+</head>
+<body>
+<div id="chat-container">
+    <div id="chat_messages"></div>
+    <input id="messageInput" type="text" placeholder="Type your message..."/>
+    <input id="fileInput" type="file"/>
+    <button id="sendButton">Send</button>
+</div>
+
+<script>
+    const socket = new WebSocket("ws://localhost:8001/ws");
+    const chatMessages = document.getElementById("chat_messages");
+    const messageInput = document.getElementById("messageInput");
+    const fileInput = document.getElementById("fileInput");
+    const sendButton = document.getElementById("sendButton");
+
+    socket.onopen = (event) => {
+        console.log("WebSocket connection opened:", event);
+        socket.send("Hello, WebSocket!");
+    };
+
+    socket.onclose = (event) => {
+        console.log("WebSocket connection closed:", event);
+    };
+
+    socket.onmessage = (event) => {
+        const message = event.data;
+        if (message.toString().startsWith("data:image/png;base64,") || message.toString().startsWith("data:image/jpeg;base64,")) {
+            imgData = `<img src=${message} style="max-width: 300px;width: 100px;"/>`
+            chatMessages.innerHTML += `<p>${imgData}</p>`;
+        } else {
+            chatMessages.innerHTML += `<p>${message}</p>`;
+        }
+    };
+
+    sendButton.addEventListener("click", () => {
+        const message = messageInput.value;
+        const selectedFile = fileInput.files[0];
+        if (selectedFile) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const fileData = event.target.result;
+                socket.send(fileData);
+            };
+            reader.readAsDataURL(selectedFile);
+            fileInput.value = ''
+        }
+        socket.send(message);
+        messageInput.value = "";
+    });
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 from django.db.models import Q, Sum
-from rest_framework import generics, filters
+from rest_framework import generics, filters, status
 from rest_framework.exceptions import NotFound
+from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -43,35 +44,40 @@ class ChooseidAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Chooses.objects.all()
     serializer_class = ChoosesSerializer
 
-
+# def get(self, request):
+    #     products = Buys.objects.all()
+    #     sum_payments = Buys.calculate_sum()
+    #     products_data = BuysSerializer(products, many=True).data
+    #     response_data = {
+    #         'sum_payments': sum_payments,
+    #         'products': products_data
+    #     }
+    #     return Response(response_data)
 class BuysAPIView(APIView):
 
     def get(self, request):
         products = Buys.objects.all()
-        sum_payments = Buys.calculate_sum()
+        total_sum_payments = sum([product.payment for product in products])
+
+        total_sum_paid = 0
+        total_sum_unpaid = total_sum_payments
+
+        for product in products:
+            choose_total = product.chooses.quantity * product.chooses.product.price
+            if product.payment >= choose_total:
+                total_sum_paid += product.payment - choose_total
+
+        total_sum_unpaid -= total_sum_paid
+
         products_data = BuysSerializer(products, many=True).data
         response_data = {
-            'sum_payments': sum_payments,
+            'total_sum_payments': total_sum_payments,
+            'total_sum_paid': total_sum_paid,
+            'total_sum_unpaid': total_sum_unpaid,
             'products': products_data
         }
         return Response(response_data)
 
-    # def post(self, request):
-    #     serializer = BuysSerializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #
-    #     total_sum = sum([choose.quantity * choose.product.price for choose in Chooses.objects.all()])
-    #     payment = serializer.validated_data.get('payment')
-    #
-    #     if total_sum > payment or payment > total_sum:
-    #         send_email.delay('roncrist5575@gmail.com', f'Payment completed. No further payment required.')
-    #     if payment < total_sum:
-    #
-    #         send_email.delay('roncrist5575@gmail.com',
-    #                          f'Please make a payment. You need to pay an additional amount of {payment - total_sum}. Check our website.')
-    #
-    #     return Response(status=201)
     def post(self, request):
         serializer = BuysSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

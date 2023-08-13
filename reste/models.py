@@ -264,4 +264,3 @@ class Buys(models.Model):
                 return
 
             send_email.delay('roncrist5575@gmail.com', message)
-
