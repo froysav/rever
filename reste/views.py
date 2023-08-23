@@ -1,4 +1,7 @@
 from django.db.models import Q, Sum
+from django.db.models.functions import TruncMonth
+from django.utils.timezone import now
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, filters, status
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import CreateAPIView
@@ -44,15 +47,16 @@ class ChooseidAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Chooses.objects.all()
     serializer_class = ChoosesSerializer
 
+
 # def get(self, request):
-    #     products = Buys.objects.all()
-    #     sum_payments = Buys.calculate_sum()
-    #     products_data = BuysSerializer(products, many=True).data
-    #     response_data = {
-    #         'sum_payments': sum_payments,
-    #         'products': products_data
-    #     }
-    #     return Response(response_data)
+#     products = Buys.objects.all()
+#     sum_payments = Buys.calculate_sum()
+#     products_data = BuysSerializer(products, many=True).data
+#     response_data = {
+#         'sum_payments': sum_payments,
+#         'products': products_data
+#     }
+#     return Response(response_data)
 class BuysAPIView(APIView):
 
     def get(self, request):
@@ -74,7 +78,6 @@ class BuysAPIView(APIView):
             'total_sum_payments': total_sum_payments,
             'total_sum_paid': total_sum_paid,
             'total_sum_unpaid': total_sum_unpaid,
-            'products': products_data
         }
         return Response(response_data)
 
@@ -89,6 +92,26 @@ class BuysAPIView(APIView):
         return Response(status=201)
 
 
+class MonthlyPaymentsAPIView(APIView):
+    def get(self, request):
+        current_year = now().year
+        current_month = now().month
+
+        payments_by_month = Buys.objects.annotate(month=TruncMonth('date')).values('month').annotate(
+            total_payments=Sum('payment')
+        ).order_by('month')
+
+        response_data = []
+        for entry in payments_by_month:
+            month_data = {
+                'month': entry['month'].strftime('%B'),
+                'total_payments': entry['total_payments'],
+            }
+            response_data.append(month_data)
+
+        return Response(response_data)
+
+
 class BuysidAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Buys.objects.all()
     serializer_class = BuysSerializer
@@ -99,9 +122,15 @@ class MerchantAPIView(generics.ListCreateAPIView):
     serializer_class = MerchantSerializer
 
 
-class ClientAPIView(generics.RetrieveUpdateDestroyAPIView):
+class ClientAPIView(generics.ListCreateAPIView):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
+
+
+class ClientidAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    lookup_url_kwarg = 'pk'
 
 
 class Client_detailsAPIView(APIView):
@@ -232,31 +261,34 @@ class BillingRecordsView(generics.ListAPIView):
     pagination_class = LargeResultsSetPagination
 
 
-class SendMail(APIView):
-    def post(self, request):
-        try:
-            serializer = EmailSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            email = serializer.validated_data.get('email')
-            message = 'Test message'
-            send_email.delay(email, message)
-        except Exception as e:
-            return Response({'success': False, 'message': f'{e}'})
-        return Response({'success': True, 'message': 'Sent'})
+class SendMail(generics.CreateAPIView):
+    serializer_class = EmailSerializer
 
+    def perform_create(self, serializer):
+        email = 'roncrist5575@gmail.com'
+        message = self.request.data.get('message')
+        send_email.delay(email, message)
+
+
+# class SearchAPIView(generics.ListAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+#     filter_backends = [filters.SearchFilter]
+#     search_fields = ['name', 'price', 'description']
+#
+#     def get_queryset(self):
+#         queryset = super().get_queryset()
+#         q = self.request.GET.get('q', None)
+#         if q:
+#             queryset = queryset.filter(
+#                 Q(name__icontains=q) |
+#                 Q(price__icontains=q) |
+#                 Q(description__icontains=q)
+#             )
+#             return queryset
 
 class SearchAPIView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name', 'price']
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        q = self.request.GET.get('q', None)
-        if q:
-            queryset = queryset.filter(
-                Q(name__icontains=q) |
-                Q(price__icontains=q)
-            )
-        return queryset
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name', 'price']

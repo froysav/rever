@@ -201,8 +201,6 @@ class Credit(models.Model):
 
     def __str__(self):
         return self.name
-
-
 class Chooses(models.Model):
     merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)

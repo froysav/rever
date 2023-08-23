@@ -1,57 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f7f9fc;
+        }
+        #chat-box {
+            max-width: 400px;
+            width: 100%;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        #chat_messages {
+            flex: 1;
+            margin-bottom: 10px;
+            padding: 10px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input[type="text"],
+        input[type="file"],
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-<div id="chat-container">
-    <div id="chat_messages"></div>
-    <input id="messageInput" type="text" placeholder="Type your message..."/>
-    <input id="fileInput" type="file"/>
-    <button id="sendButton">Send</button>
-</div>
+    <div id="chat-box">
+        <div id="chat_messages">
+        </div>
+        <input id="messageInput" type="text" placeholder="Type your message...">
+        <input id="fileInput" type="file">
+        <button id="sendButton">Send</button>
+    </div>
 
-<script>
-    const socket = new WebSocket("ws://localhost:8001/ws");
-    const chatMessages = document.getElementById("chat_messages");
-    const messageInput = document.getElementById("messageInput");
-    const fileInput = document.getElementById("fileInput");
-    const sendButton = document.getElementById("sendButton");
+    <script>
+        const socket = new WebSocket("ws://localhost:8001/ws");
+        const chatMessages = document.getElementById("chat_messages");
+        const messageInput = document.getElementById("messageInput");
+        const fileInput = document.getElementById("fileInput");
+        const sendButton = document.getElementById("sendButton");
 
-    socket.onopen = (event) => {
-        console.log("WebSocket connection opened:", event);
-        socket.send("Hello, WebSocket!");
-    };
+        socket.onopen = (event) => {
+            console.log("WebSocket connection opened:", event);
+            socket.send("Hello");
+        };
 
-    socket.onclose = (event) => {
-        console.log("WebSocket connection closed:", event);
-    };
+        socket.onclose = (event) => {
+            console.log("WebSocket connection closed:", event);
+        };
 
-    socket.onmessage = (event) => {
-        const message = event.data;
-        if (message.toString().startsWith("data:image/png;base64,") || message.toString().startsWith("data:image/jpeg;base64,")) {
-            imgData = `<img src=${message} style="max-width: 300px;width: 100px;"/>`
-            chatMessages.innerHTML += `<p>${imgData}</p>`;
-        } else {
-            chatMessages.innerHTML += `<p>${message}</p>`;
-        }
-    };
+        socket.onmessage = (event) => {
+            const message = event.data;
+            if (message.startsWith("data:image/png;base64,") || message.startsWith("data:image/jpeg;base64,")) {
+                const imgData = `<img src="${message}">`;
+                chatMessages.innerHTML += `<p>${imgData}</p>`;
+            } else {
+                chatMessages.innerHTML += `<p>${message}</p>`;
+            }
+        };
 
-    sendButton.addEventListener("click", () => {
-        const message = messageInput.value;
-        const selectedFile = fileInput.files[0];
-        if (selectedFile) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const fileData = event.target.result;
-                socket.send(fileData);
-            };
-            reader.readAsDataURL(selectedFile);
-            fileInput.value = ''
-        }
-        socket.send(message);
-        messageInput.value = "";
-    });
-</script>
+        sendButton.addEventListener("click", () => {
+            const message = messageInput.value;
+            const selectedFile = fileInput.files[0];
+            if (selectedFile) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const fileData = event.target.result;
+                    socket.send(fileData);
+                };
+                reader.readAsDataURL(selectedFile);
+                fileInput.value = '';
+            }
+            if (message.trim() !== "") {
+                socket.send(message);
+                messageInput.value = "";
+            }
+        });
+
+        messageInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                sendButton.click();
+            }
+        });
+    </script>
 </body>
 </html>

@@ -161,3 +161,4 @@ class LargeResultsSetPagination(PageNumberPagination):
 
 class EmailSerializer(Serializer):
     email = EmailField()
+    message = serializers.CharField()

@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
     'rest_framework',
     'django_elasticsearch_dsl',
+    'django_filters',
     'django_elasticsearch_dsl_drf',
     'rest_framework_simplejwt',
     'django_celery_results',
@@ -73,13 +74,14 @@ TEMPLATES = [
     },
 ]
 REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 4,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-    )
+    ),
 }
 
 WSGI_APPLICATION = 'rest.wsgi.application'
@@ -107,7 +109,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 ELASTICSEARCH_DSL = {
     'default': {
-        'hosts': 'localhost:9200'
+        'hosts': 'elasticsearch_service:9200'
     },
 }
 
@@ -144,3 +146,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'roncrist5575@gmail.com'
 EMAIL_HOST_PASSWORD = 'snbistvjttqkyooa'
+
+

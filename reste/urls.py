@@ -4,7 +4,8 @@ from .views import ProductAPIView, ProductUpdateDeleteAPIView, AddToShoppingCard
     UserShoppingCardAPIView, DeleteFromCardAPIView, \
     BillingRecordsView, SendMail, SearchAPIView, \
     ProductDetailAPIView, OrderAPIView, MerchantAPIView, PutsAPIView, UsersAPIView, ClientAPIView, \
-    Client_detailsAPIView, CreditAPIView, ChoosesAPIView, BuysAPIView,CreditidAPIView,ChooseidAPIView,AddToShoppingCardidAPIView,BuysidAPIView,UsersidAPIView
+    Client_detailsAPIView, CreditAPIView, ChoosesAPIView, BuysAPIView, CreditidAPIView, ChooseidAPIView, \
+    AddToShoppingCardidAPIView, BuysidAPIView, UsersidAPIView, MonthlyPaymentsAPIView, ClientidAPIView
 from rest_framework_swagger.views import get_swagger_view
 
 schema_view = get_swagger_view(title='API Documentation')
@@ -19,13 +20,15 @@ urlpatterns = [
     path('page/<int:pk>/', BillingRecordsView.as_view(), name='product'),
     path('user/<int:pk>/', UsersidAPIView.as_view(), name='user'),
     path('buys/<int:pk>/', BuysidAPIView.as_view(), name='product'),
+    path('clients/<int:pk>/', ClientidAPIView.as_view(), name='clients'),
     path('choose/<int:pk>/', ChooseidAPIView.as_view(), name='product'),
     path('api/cards/<int:pk>/', AddToShoppingCardidAPIView.as_view(), name='adds'),
-    path('credit/<int:pk>/', CreditidAPIView.as_view(), name='product'),
+    path('credits/<int:credit_id>/', CreditidAPIView.as_view(), name='credit-detail'),
     path('send-email', SendMail.as_view(), name='send_email'),
     path('search/', SearchAPIView.as_view(), name='your-model-list'),
     path('order/', OrderAPIView.as_view(), name='order'),
     path('merchant/', MerchantAPIView.as_view(), name='merchant'),
+    path('api/monthly-payments/', MonthlyPaymentsAPIView.as_view(), name='monthly-payments'),
     path('merchant/<int:pk>', PutsAPIView.as_view(), name='merchant'),
     # path('users/', UsersAPIView.as_view(), name='users'),
     path('client/', ClientAPIView.as_view(), name='client'),
