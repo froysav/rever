@@ -188,7 +188,7 @@ class ProductDetailAPIView(APIView):
             return Response(serializer.data)
 
         except:
-            return Response('This does not exist')
+            return Response('This does not exist ')
 
 
 class ProductUpdateDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
