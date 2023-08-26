@@ -4,7 +4,7 @@ from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, filters, status
 from rest_framework.exceptions import NotFound
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -224,24 +224,23 @@ class UserShoppingCardAPIView(APIView):
         return Response(data)
 
 
-class OrderAPIView(APIView):
+# class OrderCreateAPIView(CreateAPIView):
+#     serializer_class = OrderSerializer
+
+class OrderAPIView(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
 
-    def post(self, request):
-        product_data = OrderSerializer(data=request.data)
-        product_data.is_valid(raise_exception=True)
-        product_data.save()
-        return Response(status=201)
-
-    def get(self, request):
-        orders = Order.objects.all()
-        total_price = orders.aggregate(total=Sum('price'))['total']
-        serialized_orders = OrderSerializer(orders, many=True)
-        response_data = {
-            'orders': serialized_orders.data,
-            'total_price': total_price
-        }
-        return Response(response_data)
+    # def get(self, request, *args, **kwargs):
+    #     orders = self.get_queryset()
+    #     total_price = orders.aggregate(total=Sum('price'))['total']
+    #     serialized_orders = self.serializer_class(orders, many=True)
+    #     response_data = {
+    #         'orders': serialized_orders.data,
+    #         'total_price': total_price
+    #     }
+    #     return Response(response_data)
 
 
 class DeleteFromCardAPIView(APIView):
